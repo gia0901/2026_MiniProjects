@@ -1,0 +1,1 @@
+# Mini Projects (Modern C++, Embedded Linux)
