@@ -4,7 +4,9 @@
 #include <cstring>
 #include <string>
 #include <string_view>
-using namespace std;
+#include <system_error>
+#include <utility>
+#include <cassert>
 
 enum class ErrorCode {
     OpenFailed,
@@ -28,27 +30,42 @@ template<typename T>
 class Result {
 public:
     // success constructor
-    Result(T data) : data_(std::move(data)) {}
+    explicit Result(T data) : data_(std::move(data)) {}
 
     // failure constructor
-    Result(Error error) : error_(std::move(error)) {}
+    explicit Result(Error error) : error_(std::move(error)) {}
 
     // nếu chứa data
     bool hasData() const { return data_.has_value(); }
 
+    // nếu chứa lỗi
+    bool hasError() const { return error_.has_value(); }
+
+    // truy xuất lỗi
+    const Error& getError() const & { return error_.value(); }
+    Error&& getError() && { return std::move(error_.value()); }
+
     // access data (compiler lựa chọn 1 trong 3 hàm dưới)
     // 1. read-only
     const T& getData() const & {
+        assert(hasData());
         return data_.value();
     }
 
     // 2. move access, transfer data ra ngoài : kiểu data T cần support move
-    T&& getData() && {
+    // KHÔNG trả T&& từ getter trừ khi bạn thực sự trả tham chiếu đến một object có lifetime chắc chắn dài hơn caller (hiếm). 
+    // Thay vào đó trả T (by value, moved) khi bạn muốn "di chuyển" dữ liệu ra khỏi Result.
+
+    // Ngắn gọn: trả T (by value) sẽ move dữ liệu nội bộ vào một prvalue trả về, 
+    // rồi prvalue đó được move (hoặc elided) vào biến của caller — ownership được chuyển an toàn, không tạo dangling reference.
+    T getData() && {
+        assert(hasData());
         return std::move(data_.value());
     }
 
     // 3. mutable access: có thể thay đổi data
     T& getData() & {
+        assert(hasData());
         return data_.value();
     }
 private:
@@ -65,4 +82,8 @@ Error makeSystemError(ErrorCode code, std::string_view whatHaveDone) {
         .code = code,
         .message = std::string(whatHaveDone) + " failed: " + std::strerror(errno)
     };
+}
+
+int main() {
+    
 }
