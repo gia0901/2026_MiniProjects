@@ -54,9 +54,8 @@ public:
 
     // 2. move access, transfer data ra ngoài : kiểu data T cần support move
     // KHÔNG trả T&& từ getter trừ khi bạn thực sự trả tham chiếu đến một object có lifetime chắc chắn dài hơn caller (hiếm). 
-    // Thay vào đó trả T (by value, moved) khi bạn muốn "di chuyển" dữ liệu ra khỏi Result.
-
-    // Ngắn gọn: trả T (by value) sẽ move dữ liệu nội bộ vào một prvalue trả về, 
+    
+    // Ngắn gọn: return T (by value) sẽ move dữ liệu nội bộ vào một prvalue trả về, 
     // rồi prvalue đó được move (hoặc elided) vào biến của caller — ownership được chuyển an toàn, không tạo dangling reference.
     T getData() && {
         assert(hasData());
